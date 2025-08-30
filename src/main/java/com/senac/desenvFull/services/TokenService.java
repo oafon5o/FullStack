@@ -1,7 +1,13 @@
 package com.senac.desenvFull.services;
 
 import com.auth0.jwt.JWT;
+import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.interfaces.DecodedJWT;
+import com.senac.desenvFull.model.Token;
+import com.senac.desenvFull.repositoy.TokenRepository;
+import org.springframework.beans.InvalidPropertyException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +26,9 @@ public class TokenService {
 
     private String emissor = "GerenciadorStreaming";
 
+    @Autowired
+    private TokenRepository tokenRepository;
+
     public String gerarToken(String usuario, String senha){
         Algorithm algorithm = Algorithm.HMAC256(secret);
 
@@ -28,7 +37,23 @@ public class TokenService {
                 .withSubject(usuario)
                 .withExpiresAt(this.gerarDataExpiracao())
                 .sign(algorithm);
+
+        tokenRepository.save(new Token(null, token, usuario));
         return token;
+    }
+
+    public String validarToken(String token){
+        Algorithm algorithm = Algorithm.HMAC256(secret);
+        JWTVerifier verifier = JWT.require(algorithm).withIssuer(emissor).build();
+        verifier.verify(token);
+
+        var tokenResult = tokenRepository.findByToken(token).orElse(null);
+
+        if (tokenResult == null){
+            throw new IllegalArgumentException("Token invalido!");
+        }
+
+        return tokenResult.getUsuario();
     }
 
     private Instant gerarDataExpiracao(){
