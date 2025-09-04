@@ -4,8 +4,11 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.senac.desenvFull.dto.LoginRequestDto;
 import com.senac.desenvFull.model.Token;
+import com.senac.desenvFull.model.Usuario;
 import com.senac.desenvFull.repositoy.TokenRepository;
+import com.senac.desenvFull.repositoy.UsuarioRepository;
 import org.springframework.beans.InvalidPropertyException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,14 +30,19 @@ public class TokenService {
     private String emissor = "GerenciadorStreaming";
 
     @Autowired
+    private UsuarioRepository usuarioRepository;
+
+    @Autowired
     private TokenRepository tokenRepository;
 
-    public String gerarToken(String usuario, String senha){
+    public String gerarToken(LoginRequestDto loginRequestDto){
+        var usuario = usuarioRepository.findByEmail(loginRequestDto.email()).orElse(null);
+
         Algorithm algorithm = Algorithm.HMAC256(secret);
 
         String token = JWT.create()
                 .withIssuer(emissor)
-                .withSubject(usuario)
+                .withSubject(usuario.getEmail())
                 .withExpiresAt(this.gerarDataExpiracao())
                 .sign(algorithm);
 
@@ -42,7 +50,7 @@ public class TokenService {
         return token;
     }
 
-    public String validarToken(String token){
+    public Usuario validarToken(String token){
         Algorithm algorithm = Algorithm.HMAC256(secret);
         JWTVerifier verifier = JWT.require(algorithm).withIssuer(emissor).build();
         verifier.verify(token);

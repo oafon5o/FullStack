@@ -32,7 +32,7 @@ public class AuthController {
             return ResponseEntity.badRequest().body("Usuário e/ou senha inválido!");
         }
 
-        var token = tokenService.gerarToken(request.email(), request.senha());
+        var token = tokenService.gerarToken(request);
 
         return ResponseEntity.ok(token);
     }
