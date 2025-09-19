@@ -1,4 +1,4 @@
 package com.senac.desenvFull.dto;
 
-public record LoginResponse (String token){
+public record LoginResponseDto(String token){
 }
